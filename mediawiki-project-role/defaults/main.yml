@@ -1,0 +1,43 @@
+---
+# defaults file for mediawiki-project-role
+# Here you can set var valuve as you want. 
+# Azure
+az_rg_name: rgname # your preferred rg name
+az_location: norwayeast # your preferred location
+az_rg_state: present
+az_force_delete: false
+az_vm_name: mediawikihost
+az_nsg_rules:
+  - name: DenySSH
+    protocol: Tcp
+    destination_port_range: 22
+    access: Deny
+    priority: 100
+    direction: Inbound
+  - name: "AllowSSH"
+    protocol: Tcp
+    source_address_prefix:
+      - "174.109.158.0/24"
+      - "174.109.159.0/24"
+    destination_port_range: 22
+    access: Allow
+    priority: 101
+    direction: Inbound
+  - name: "AllowMultiplePorts"
+    protocol: Tcp
+    source_address_prefix:
+      - "174.109.158.0/24"
+      - "174.109.159.0/24"
+    destination_port_range:
+      - 80
+      - 443
+    access: Allow
+    priority: 102
+
+# MediaWiki vars
+httpd_root: /opt/rh/httpd24/root
+php_root: /opt/rh/rh-php73/root
+mediawiki_version: "1.41.1"
+mediawiki_user: "wiki"
+mediawiki_password: "your_password"
+mediawiki_database: "wikidatabase"

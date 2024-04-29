@@ -1,0 +1,91 @@
+---
+- name: Deploy CAC for MediaWiki
+  tags:
+    - cac
+  block:
+    - name: Install Apache, MySQL, PHP (LAMP)
+      ansible.builtin.yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - httpd
+        - mariadb
+        - mariadb-server
+        - php
+        - php-mysql
+        - php-gd
+        - php-xml
+        - php-mbstring
+
+    - name: Start and enable MariaDB
+      ansible.builtin.systemd:
+        name: mariadb
+        state: started
+        enabled: yes
+
+    - name: Secure MariaDB installation
+      ansible.builtin.shell: mysql_secure_installation
+
+    - name: Create wiki user and database
+      myscommunity.mysql.mysql_user:
+        name: "{{ mediawiki_user }}"
+        password: "{{ mediawiki_password }}"
+        priv: "{{ mediawiki_database }}.*:ALL"
+        state: present
+
+    - name: Create wiki database
+      community.mysql.mysql_db:
+        name: "{{ mediawiki_database }}"
+        state: present
+
+    - name: Start and enable Apache
+      ansible.builtin.systemd:
+        name: httpd
+        state: started
+        enabled: yes
+
+    - name: Download and install MediaWiki
+      community.general.get_url:
+        url: "https://releases.wikimedia.org/mediawiki/{{ mediawiki_version }}/mediawiki-{{ mediawiki_version }}.tar.gz"
+        dest: "/tmp/mediawiki-{{ mediawiki_version }}.tar.gz"
+
+    - name: Extract MediaWiki
+      ansible.builtin.unarchive:
+        src: "/tmp/mediawiki-{{ mediawiki_version }}.tar.gz"
+        dest: "{{ httpd_root }}/var/www/html"
+        remote_src: yes
+
+    - name: Set up Apache to serve MediaWiki
+      ansible.builtin.blockinfile:
+        path: /etc/httpd/conf/httpd.conf
+        block: |
+          DocumentRoot "{{ httpd_root }}/var/www/html/mediawiki"
+          <Directory "{{ httpd_root }}/var/www/html/mediawiki">
+            AllowOverride None
+            Require all granted
+          </Directory>
+        marker: "# {mark} ANSIBLE MANAGED BLOCK"
+
+    - name: Restart Apache ansible.builtin.systemd
+      ansible.builtin.systemd:
+        name: httpd
+        state: restarted
+
+    - name: Open firewall ports for HTTP and HTTPS
+      ansible.posix.firewalld:
+        ansible.builtin.systemd: "{{ item }}"
+        permanent: yes
+        state: enabled
+      loop:
+        - http
+        - https
+
+    - name: Set correct SELinux context for MediaWiki
+      community.general.sefcontext:
+        target: "{{ httpd_root }}/var/www/html/mediawiki(/.*)?"
+        setype: httpd_sys_content_t
+        state: present
+      notify: relabel files
+
+    - name: relabel files
+      ansible.builtin.command: restorecon -Rv "{{ httpd_root }}/var/www/html/mediawiki"

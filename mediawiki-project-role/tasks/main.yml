@@ -1,0 +1,14 @@
+---
+# tasks for mediawiki-project-role
+
+- name: Deploy IAC for MediaWiki
+  ansible.builtin.include_tasks: "tasks/iac.yml"
+  tags:
+    - iac
+  delegate_to: localhost
+
+- name: Deploy Config as code
+  ansible.builtin.include_tasks: "tasks/cac.yml"
+  tags:
+    - cac
+  delegate_to: "{{ az_vm_name }}"

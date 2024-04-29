@@ -1,0 +1,15 @@
+1. Infrastructure Deployment on Azure (iac.yml):
+This part of the project focuses on deploying the necessary infrastructure on Microsoft Azure using Infrastructure as Code (IaC) principles.
+The deployment script (iac.yml) will utilize Azure resources such as virtual machines, networking components, and storage accounts to set up the required environment.
+The script will dynamically retrieve Azure subscription details (AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_SECRET, AZURE_TENANT) securely stored within Ansible Tower using secret management features.
+
+2. MediaWiki Installation on Deployed Infrastructure (cac.yml):
+Once the infrastructure is deployed, this part of the project will focus on installing MediaWiki on the provisioned Azure resources.
+The deployment script (cac.yml) will configure the necessary software components and dependencies required for MediaWiki.
+It will ensure that the MediaWiki application is properly installed and accessible on the deployed infrastructure.
+
+Additionally, we would require SSH connectivity with the newly deployed virtual machines from Ansible Tower on port 22. This connectivity can be achieved through a post-deployment activity, commonly referred to as an Ansible callback, where Ansible is installed on the newly provisioned VMs to facilitate communication and management.
+
+By breaking down the project into these two distinct parts, you can ensure a clear separation of concerns and focus on each aspect independently: infrastructure provisioning and application deployment. Additionally, the use of Ansible Tower's secret management capabilities ensures the secure handling of sensitive Azure credentials, while the establishment of SSH connectivity enables seamless communication and management of the deployed infrastructure.
+
+The main playbook, executed via mail.yml located in the task folder, will sequentially deploy infrastructure first, followed by the installation of MediaWiki on the newly provisioned VM. All necessary variables are stored under the default folder, allowing for easy customization as needed.
